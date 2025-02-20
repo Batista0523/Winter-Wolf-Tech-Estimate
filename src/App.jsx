@@ -19,7 +19,7 @@ import { ContentWrapper } from "./style/HomeStyled";
 import CreateAccEquip from "./pages/CreateAccEquip";
 import SemiEstimate from "./pages/SemilEstimate";
 // import Finalestimate from "./Pages/Finalestimate";
-// import UpdateProfile from "./Users/UpdateProfile";
+import UpdateProfile from "./Users/UpdateProfile";
 import OneEstimate from "./pages/OneEstimate";
 import AccesoriesAndEquipments from "./pages/AccesoriesAndEquipments";
 function App() {
@@ -58,7 +58,7 @@ function App() {
           />
           {/* <Route path="/final_estimate" element={<Finalestimate />} /> */}
           <Route path="/semi_estimate" element={<SemiEstimate />} />
-          {/* <Route path="/update_profile" element={<UpdateProfile />} /> */}
+          <Route path="/update_profile" element={<UpdateProfile />} />
           <Route
             path="/login"
             element={!user ? <Login /> : <Navigate to="/" />}

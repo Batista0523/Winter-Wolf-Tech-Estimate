@@ -442,6 +442,28 @@ export const NumberInput = styled.input`
     padding: 0.5rem 0.7rem;
   }
 `;
+export const NumberInput2 = styled.input`
+  width: 136px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: ${(props) => (props.inline ? "0" : "-2rem")};
+  border: 1px solid ${lightGrey};
+  border-radius: 25px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  position: relative;
+  right:3rem ;
+
+  &:focus {
+    border-color: ${blueColor};
+    outline: none;
+  }
+
+  @media (max-width: 768px) {
+    width: 100px;
+    padding: 0.5rem 0.7rem;
+  }
+`;
 
 /* New container to group inline inputs */
 export const InputRow = styled.div`

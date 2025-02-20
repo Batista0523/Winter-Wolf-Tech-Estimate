@@ -17,8 +17,9 @@ import {
   OverlayContainer,
   DisplaySquare,
   InputRow,
+  NumberInput2,
 } from "../style/SemiEstimateStyled";
-import { Link, useParams } from "react-router-dom";
+import {  useParams } from "react-router-dom";
 import { StyledLink } from "../style/FinalEstimateStyled";
 
 function SemiEstimate() {
@@ -350,7 +351,7 @@ function SemiEstimate() {
         <OverlayContainer>
           <SelectedItemContainer>
             <p>Selected Item: {selectedItem.name}</p>
-            <NumberInput
+            <NumberInput2
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
