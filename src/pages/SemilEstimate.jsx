@@ -16,10 +16,7 @@ import {
   SummaryItem,
   OverlayContainer,
   DisplaySquare,
-  
-
-
-
+  InputRow,
 } from "../style/SemiEstimateStyled";
 import { Link, useParams } from "react-router-dom";
 import { StyledLink } from "../style/FinalEstimateStyled";
@@ -220,7 +217,7 @@ function SemiEstimate() {
   return (
     <SemiEstimateContainer>
       <Title>Create a New Estimate</Title>
-      
+
       <TextInput
         type="text"
         placeholder="Client Name"
@@ -365,22 +362,21 @@ function SemiEstimate() {
           </SelectedItemContainer>
         </OverlayContainer>
       )}
+      <InputRow>
+        <NumberInput
+          type="number"
+          placeholder="Labor Hours"
+          value={laborHours}
+          onChange={(e) => setLaborHours(e.target.value)}
+        />
 
-      <NumberInput
-        type="number"
-        placeholder="Labor Hours"
-        value={laborHours}
-        onChange={(e) => setLaborHours(e.target.value)}
-      />
-      <br />
-      <NumberInput
-        type="number"
-        placeholder="Market Cap"
-        value={marketCap}
-        onChange={(e) => setMarketCap(e.target.value)}
-      />
-
-      <br />
+        <NumberInput
+          type="number"
+          placeholder="Market Cap"
+          value={marketCap}
+          onChange={(e) => setMarketCap(e.target.value)}
+        />
+      </InputRow>
       <StyledButton onClick={saveEstimateProgress}>Save Progress</StyledButton>
 
       <StyledButton onClick={handleCreateEstimate}>

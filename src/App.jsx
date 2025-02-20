@@ -7,20 +7,21 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import Navbar from "./Components/Navbar";
+import Navbar from "./Components/NavBar";
 import Home from "./Components/Home";
-import Estimates from "./Pages/Estimates";
+import Estimates from "./pages/Estimates";
 import RegisterUser from "./Users/RegisterUser";
 import Login from "./Users/Login";
-import About from "./Pages/About";
+
+// import About from "./Pages/About";
 import UserProfile from "./Users/UserProfile";
 import { ContentWrapper } from "./style/HomeStyled";
-import CreateAccEquip from "./Pages/CreateAccEquip";
-import SemilEstimate from "./Pages/SemilEstimate";
+import CreateAccEquip from "./pages/CreateAccEquip";
+import SemiEstimate from "./pages/SemilEstimate";
 // import Finalestimate from "./Pages/Finalestimate";
-import UpdateProfile from "./Users/UpdateProfile";
-import OneEstimate from "./Pages/OneEstimate";
-import AccesoriesAndEquipments from "./Pages/AccesoriesAndEquipments";
+// import UpdateProfile from "./Users/UpdateProfile";
+import OneEstimate from "./pages/OneEstimate";
+import AccesoriesAndEquipments from "./pages/AccesoriesAndEquipments";
 function App() {
 
 
@@ -56,8 +57,8 @@ function App() {
             element={<AccesoriesAndEquipments />}
           />
           {/* <Route path="/final_estimate" element={<Finalestimate />} /> */}
-          <Route path="/semi_estimate" element={<SemilEstimate />} />
-          <Route path="/update_profile" element={<UpdateProfile />} />
+          <Route path="/semi_estimate" element={<SemiEstimate />} />
+          {/* <Route path="/update_profile" element={<UpdateProfile />} /> */}
           <Route
             path="/login"
             element={!user ? <Login /> : <Navigate to="/" />}
@@ -66,7 +67,7 @@ function App() {
             path="/register"
             element={!user ? <RegisterUser /> : <Navigate to="/" />}
           />
-          <Route path="/about" element={<About />} />
+          {/* <Route path="/about" element={<About />} /> */}
           <Route
             path="/profile/:id"
             element={
