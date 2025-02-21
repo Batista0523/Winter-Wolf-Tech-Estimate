@@ -43,7 +43,9 @@ function SemiEstimate() {
   const [clientAddress, setClientAddress] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [laborHours, setLaborHours] = useState("");
-  const [marketCap, setMarketCap] = useState(() => localStorage.getItem("marketCap") || "");
+  const [marketCap, setMarketCap] = useState(
+    () => localStorage.getItem("marketCap") || ""
+  );
   const [selectedItem, setSelectedItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAccessory, setIsAccessory] = useState(false);
@@ -218,7 +220,6 @@ function SemiEstimate() {
         summaryRef.current.scrollIntoView({ behavior: "smooth" });
       }
     }, 2000);
-   
   };
 
   const saveEstimateProgress = () => {
@@ -388,7 +389,7 @@ function SemiEstimate() {
           value={laborHours}
           onChange={(e) => setLaborHours(e.target.value)}
         />
-{/* <strong>M/C:</strong> {marketCap} */}
+        {/* <strong>M/C:</strong> {marketCap} */}
         {/* <NumberInput
           type="number"
           placeholder="Market Cap"

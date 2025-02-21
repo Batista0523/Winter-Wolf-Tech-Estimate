@@ -242,3 +242,49 @@ export const ActivityItem = styled.li`
   font-size: 1rem;
   color: #7f8c8d;
 `;
+export const StyledInput = styled.input`
+  width: 100%;
+  max-width: 300px;
+  padding: 12px;
+  font-size: 1rem;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  text-align: center; /* Centers the text and placeholder */
+  outline: none;
+  transition: border-color 0.3s ease;
+
+  &::placeholder {
+    text-align: center; /* Ensures placeholder is centered */
+    color: #888;
+  }
+
+  &:focus {
+    border-color: #2980b9;
+  }
+
+  @media (max-width: 768px) {
+    width: 80%;
+    font-size: 0.95rem;
+  }
+`;
+export const StyledButton = styled.button`
+ background-color: #2980b9;
+  color: #ffffff;
+  padding: 12px 60px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 10px;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: #1c5980;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    width: 80%;
+    font-size: 0.95rem;
+  }
+`;
