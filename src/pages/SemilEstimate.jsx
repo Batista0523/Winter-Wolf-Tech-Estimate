@@ -365,7 +365,7 @@ function SemiEstimate() {
       {/* User can search for equipements and accesories based on their query */}
       <SearchBar
         type="text"
-        placeholder="Search for an item..."
+        placeholder={isAccessory ? "Searching Accesories" :  "Searching Equipments"}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
