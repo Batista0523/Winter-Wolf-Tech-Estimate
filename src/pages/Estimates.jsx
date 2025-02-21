@@ -58,7 +58,7 @@ function Estimates({ formatDateTime }) {
         // Wait 3 seconds before showing the data
         setTimeout(() => {
           setIsLoading(false);
-        }, 2000);
+        }, 1000);
       }
     };
 
