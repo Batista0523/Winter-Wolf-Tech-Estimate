@@ -80,7 +80,7 @@ const UserProfile = () => {
         <StyledInput
           type="number"
           value={marketCap}
-          placeholder="Enter Market Cap"
+          placeholder="Enter Market Cap Value"
           onChange={(e) => setMarketCap(e.target.value)}
         />
         <StyledButton onClick={handleMarketCapUpdate} style={{ marginLeft: "10px" }}>

@@ -7,7 +7,6 @@ import {
   TextInput,
   NumberInput,
   ItemListContainer,
-  ItemButton,
   SelectedItemContainer,
   SelectionButton,
   AddItemButton,
@@ -18,6 +17,8 @@ import {
   DisplaySquare,
   InputRow,
   NumberInput2,
+  ListItem,
+  SearchBar,
   LoadingOverlay, // new
   Spinner, // new
 } from "../style/SemiEstimateStyled";
@@ -56,7 +57,7 @@ function SemiEstimate() {
   const [isCreating, setIsCreating] = useState(false); // new state
   const summaryRef = useRef(null);
   const { id } = useParams();
-
+  const [searchTerm, setSearchTerm] = useState("");
   useEffect(() => {
     const fetchData = async () => {
       const [equipmentsResponse, accessoriesResponse] = await Promise.all([
@@ -94,6 +95,12 @@ function SemiEstimate() {
     setSelectedItem(item);
     setQuantity(1); // Initialize quantity
   };
+
+  const filteredItems = (isAccessory ? accessories : equipments)
+    .filter((item) =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleAddItem = () => {
     const updatedLocations = [...locations];
@@ -355,17 +362,26 @@ function SemiEstimate() {
       >
         Accessories
       </SelectionButton>
-
-      {/* List of Items */}
+      {/* User can search for equipements and accesories based on their query */}
+      <SearchBar
+        type="text"
+        placeholder="Search for an item..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      {/* List of items */}
       <ItemListContainer>
-        {(isAccessory ? accessories : equipments).map((item) => (
-          <ItemButton key={item.id} onClick={() => handleSelectItem(item)}>
-            {item.name}
+        {filteredItems.map((item) => (
+          <ListItem key={item.id} onClick={() => handleSelectItem(item)}>
+            <strong>{item.name}</strong>
             <br />
-            {item.brand}
-          </ItemButton>
+            <span style={{ color: "#555", fontSize: "0.9rem" }}>
+              {item.brand}
+            </span>
+          </ListItem>
         ))}
       </ItemListContainer>
+
       {selectedItem && (
         <OverlayContainer>
           <SelectedItemContainer>

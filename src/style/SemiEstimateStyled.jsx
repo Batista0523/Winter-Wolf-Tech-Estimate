@@ -520,21 +520,79 @@ export const SelectionButton = styled.button`
   }
 `;
 
-export const ItemListContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1rem 0;
-  justify-content: center;
+export const SearchBar = styled.input`
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
 
-  @media (max-width: 1024px) {
-    gap: 0.65rem;
+  &::placeholder {
+    color: #aaa;
+  }
+
+  &:focus {
+    border-color: #2980b9;
+    outline: none;
   }
 
   @media (max-width: 768px) {
-    gap: 0.5rem;
+    font-size: 0.95rem;
   }
 `;
+
+export const ItemListContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  max-height: 200px; /* Limits height for scrollability */
+  overflow-y: auto; /* Enables vertical scrolling */
+  padding: 1rem;
+  border-radius: 10px;
+  background-color: #f8f9fa;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: "Inter", sans-serif; /* Professional, clean font */
+  
+  /* Scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #2980b9;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #e1e5ea;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    max-height: 400px;
+    padding: 0.75rem;
+  }
+`;
+
+export const ListItem = styled.div`
+  padding: 10px;
+  border-bottom: 1px solid #d1d5db;
+  font-size: 1rem;
+  color: #333;
+  transition: background 0.2s ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e3f2fd;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
 
 export const ItemButton = styled.button`
   background-color: ${lightGrey};
