@@ -337,7 +337,7 @@
 //   align-items: center;
 // `;
 
-import styled ,{ keyframes }from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Link } from "react-router-dom";
 
 // Colors
@@ -452,7 +452,7 @@ export const NumberInput2 = styled.input`
   transition: border-color 0.3s ease;
   box-sizing: border-box;
   position: relative;
-  right:3rem ;
+  right: 3rem;
 
   &:focus {
     border-color: ${blueColor};
@@ -469,8 +469,8 @@ export const NumberInput2 = styled.input`
 export const InputRow = styled.div`
   display: flex;
   gap: 20px;
-  position:relative;
- right:31rem;
+  position: relative;
+  right: 31rem;
   align-items: center;
   justify-content: center;
   margin: 1rem 0;
@@ -485,7 +485,7 @@ export const DisplaySquare = styled.div`
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 0rem;
-
+  cursor: pointer;
   @media (max-width: 1024px) {
     padding: 1.25rem;
   }
@@ -494,9 +494,37 @@ export const DisplaySquare = styled.div`
     padding: 1rem;
   }
 `;
+export const TitleWithRemove = styled.h3`
+  position: relative;
+  padding-right: 0;
+
+  &:hover span {
+    display: inline;
+  }
+`;
+
+export const RemoveIcon = styled.span`
+  display: none;
+  position: relative;
+  left: 10px;
+  bottom: 10px;
+  cursor: pointer;
+  color: ${primaryColor};
+  font-weight: bold;
+`;
+
+export const ListItemContainer = styled.li`
+  position: relative;
+  padding-right: 20px;
+
+  &:hover ${RemoveIcon} {
+    display: inline;
+  }
+`;
 
 export const SelectionButton = styled.button`
-  background-color: ${({ $active }) => ($active ? primaryColor : secondaryColor)};
+  background-color: ${({ $active }) =>
+    $active ? primaryColor : secondaryColor};
   color: ${({ $active }) => ($active ? secondaryColor : primaryColor)};
   border: 1px solid ${primaryColor};
   padding: 0.6rem 1rem;
@@ -554,7 +582,7 @@ export const ItemListContainer = styled.div`
   background-color: #f8f9fa;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   font-family: "Inter", sans-serif; /* Professional, clean font */
-  
+
   /* Scrollbar styling */
   &::-webkit-scrollbar {
     width: 8px;
@@ -592,7 +620,6 @@ export const ListItem = styled.div`
     border-bottom: none;
   }
 `;
-
 
 export const ItemButton = styled.button`
   background-color: ${lightGrey};
@@ -766,7 +793,7 @@ export const LoadingOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.6);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
