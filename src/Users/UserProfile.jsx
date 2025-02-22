@@ -84,7 +84,7 @@ const UserProfile = () => {
           onChange={(e) => setMarketCap(e.target.value)}
         />
         <StyledButton onClick={handleMarketCapUpdate} style={{ marginLeft: "10px" }}>
-          Update Market Cap
+         Set Market Cap
         </StyledButton>
       </div>
 
