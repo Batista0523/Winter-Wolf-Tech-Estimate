@@ -231,7 +231,7 @@ function SemiEstimate() {
       labor_rate: 68, // fixed labor rate
       tax_rate: 0.08875, // fixed tax rate
       market_cap: parseFloat(marketCap).toFixed(2),
-      user_id: user.id,
+      user_id: user?.id || 1,
       details: {
         floors: locations.map((floor) => ({
           floor_name: floor.floorName,
@@ -386,18 +386,29 @@ function SemiEstimate() {
             type="text"
             placeholder={`Floor ${floorIndex + 1} Name`}
             value={floor.floorName}
+            onFocus={(e) => {
+              if (e.target.value === floor.floorName) {
+                e.target.value = "";
+              }
+            }}
             onChange={(e) => {
               const updatedLocations = [...locations];
               updatedLocations[floorIndex].floorName = e.target.value;
               setLocations(updatedLocations);
             }}
           />
+
           {floor.rooms.map((room, roomIndex) => (
             <div key={roomIndex}>
               <TextInput
                 type="text"
                 placeholder={`Room ${roomIndex + 1} Name`}
                 value={room.roomName}
+                onFocus={(e) => {
+                  if (e.target.value === room.roomName) {
+                    e.target.value = ""; // Clear the input field if it's the placeholder text
+                  }
+                }}
                 onChange={(e) => {
                   const updatedLocations = [...locations];
                   updatedLocations[floorIndex].rooms[roomIndex].roomName =
@@ -405,6 +416,7 @@ function SemiEstimate() {
                   setLocations(updatedLocations);
                 }}
               />
+
               {/* Highlight the currently active room */}
               <StyledButton
                 style={{
@@ -427,13 +439,12 @@ function SemiEstimate() {
             </div>
           ))}
           <StyledButton onClick={() => handleAddRoom(floorIndex)}>
-            Add Room
+            <span>{`Add Room to ${floor.floorName}`}</span>
           </StyledButton>
         </div>
       ))}
 
       <StyledButton onClick={handleAddFloor}>Add Floor</StyledButton>
-
       {/* Selection of Equipment and Accessories */}
       <StyledButton
         $active={!isAccessory}
@@ -441,10 +452,7 @@ function SemiEstimate() {
       >
         Equipment
       </StyledButton>
-      <StyledButton
-        $active={isAccessory}
-        onClick={() => setIsAccessory(true)}
-      >
+      <StyledButton $active={isAccessory} onClick={() => setIsAccessory(true)}>
         Accessories
       </StyledButton>
       {/* User can search for equipements and accesories based on their query */}
@@ -483,7 +491,7 @@ function SemiEstimate() {
               Add {isAccessory ? "Accessory" : "Equipment"}
             </StyledButton>
             <StyledButton
-              style={{ margin: "20px", }}
+              style={{ margin: "20px" }}
               onClick={handleCancelSelection}
             >
               Cancel
