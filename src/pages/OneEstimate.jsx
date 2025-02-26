@@ -30,7 +30,7 @@ import {
 
 import PDFGenerator from "../Components/PdfComponent";
 import { StyledLink } from "../style/FinalEstimateStyled";
-function OneEstimate() {
+function OneEstimate(  ) {
   const { id } = useParams();
   const [oneEstimate, setOneEstimate] = useState([]);
   const [oneFinalEstimate, setOneFinalEstimate] = useState([]);
@@ -198,6 +198,8 @@ function OneEstimate() {
           <StyledButton onClick={() => handleDelete(oneEstimate.id)}>
             Delete Estimate
           </StyledButton>
+          <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>edit</StyledLink>
+
         </EstimateBox>
       </EstimateListContainer>
     </EstimateContainer>

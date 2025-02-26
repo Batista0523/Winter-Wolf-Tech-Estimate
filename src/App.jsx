@@ -22,12 +22,8 @@ import SemiEstimate from "./pages/SemilEstimate";
 import UpdateProfile from "./Users/UpdateProfile";
 import OneEstimate from "./pages/OneEstimate";
 import AccesoriesAndEquipments from "./pages/AccesoriesAndEquipments";
+import UpdateEstimate from "./Pages/UpdateEstimate";
 function App() {
-
-
-
-  
-
   const { user, logout } = useAuth();
   const formatDateTime = (dateString) => {
     const options = {
@@ -50,7 +46,10 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/oneEstimate/:id" element={<OneEstimate />} />
 
-          <Route path="/estimates" element={<Estimates formatDateTime={formatDateTime}/>} />
+          <Route
+            path="/estimates"
+            element={<Estimates formatDateTime={formatDateTime} />}
+          />
           <Route path="/accEquip" element={<CreateAccEquip />} />
           <Route
             path="/accesoriesAndEquiments"
@@ -58,6 +57,7 @@ function App() {
           />
           {/* <Route path="/final_estimate" element={<Finalestimate />} /> */}
           <Route path="/semi_estimate" element={<SemiEstimate />} />
+          <Route path="/updateEstimate/:id" element={<UpdateEstimate />} />
           <Route path="/update_profile" element={<UpdateProfile />} />
           <Route
             path="/login"

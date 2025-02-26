@@ -8,279 +8,207 @@ import {
 
 function PDFGenerator({ estimateItem, finalEstimateData }) {
   const [selectedType, setSelectedType] = useState("type1");
+  const [pdfUrl, setPdfUrl] = useState(null);
 
-  // Function to generate Type 1 PDF
-  const generatePDFType1 = () => {
-    const doc = new jsPDF({
-      format: "a4",
-      unit: "pt",
+  const loadImage = (url) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = url;
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
     });
+  };
 
+  const generatePDFType1 = async () => {
+    const doc = new jsPDF({ format: "a4", unit: "pt" });
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 40;
+    const margin = 50;
     let verticalPosition = margin;
 
-    // Define colors
-    const primaryColor = "#182d40"; // Dark blue for headers
-    const secondaryColor = "#f1f1f1"; // Light gray for table headers
-    const textColor = "#404040"; // Dark gray for text
-    const separatorColor = "#d1d1d1"; // Light gray for line separator
-
-    // Title Header - Proposal Introduction
+    // Load logo images
+    const winterWolfLogo = await loadImage("/public/LOGO.svg");
+    const logoBBB = await loadImage("/public/BBBlogo.svg");
+    const mitsubishiLogo = await loadImage("/public/mitsubishi1.svg");
+    // Header section
+    doc.addImage(winterWolfLogo, "PNG", margin, 20, 160, 130);
+    doc.text(`Estimate ID:  #${estimateItem.id}`, margin, verticalPosition);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(primaryColor);
-    doc.text(
-      "Proposal from Winter Wolf Tech",
-      pageWidth / 2,
-      verticalPosition,
-      { align: "center" }
-    );
+    doc.setFontSize(22);
+    doc.setTextColor("#182d40");
+    // doc.text("Winter Wolf Tech - Premium HVAC Solutions", pageWidth / 2, 60, {
+    //   align: "center",
+    // });
+    verticalPosition += 160;
 
-    verticalPosition += 30;
-
-    // Subtitle
-    doc.setFontSize(12);
+    // Professional Introduction
+    doc.setFontSize(14);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(textColor);
+    doc.setTextColor("#404040");
     doc.text(
-      "We are pleased to submit our proposal to install a new, high-efficiency Mitsubishi Hyper Heat system at your residence. We understand the importance of maintaining a comfortable and energy-efficient environment and are committed to providing a seamless and compliant process.",
+      "At Winter Wolf Tech, we are committed to excellence in HVAC solutions. We prioritize efficiency, reliability, and customer satisfaction, ensuring top-tier craftsmanship and cutting-edge technology.",
       margin,
       verticalPosition,
       { maxWidth: pageWidth - margin * 2, align: "justify" }
     );
+    verticalPosition += 80;
 
-    verticalPosition += 60;
-
-    // Client Information Section
-    doc.setFontSize(14);
+    // Client Information
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor);
-    doc.text("Client Information", margin, verticalPosition);
-
+    doc.setTextColor("#182d40");
+    doc.text("Client Information:", margin, verticalPosition);
     verticalPosition += 20;
-
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(textColor);
-    doc.text(`Estimate ID: ${estimateItem.id}`, margin, verticalPosition);
+    // doc.text(`Estimate ID: ${estimateItem.id}`, margin, verticalPosition);
     verticalPosition += 15;
-    doc.text(`Client Name: ${estimateItem.client_name}`, margin, verticalPosition);
+    doc.text(
+      `Client Name: ${estimateItem.client_name}`,
+      margin,
+      verticalPosition
+    );
     verticalPosition += 15;
-    doc.text(`Client Address: ${estimateItem.client_address}`, margin, verticalPosition);
+    doc.text(
+      `Client Address: ${estimateItem.client_address}`,
+      margin,
+      verticalPosition
+    );
     verticalPosition += 15;
-    doc.text(`Client Phone: ${estimateItem.client_phone}`, margin, verticalPosition);
-
+    doc.text(
+      `Client Phone: ${estimateItem.client_phone}`,
+      margin,
+      verticalPosition
+    );
     verticalPosition += 25;
 
-    // Project Details Section
-    doc.setFontSize(14);
+    // Project Details
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor);
-    doc.text("Project Details", margin, verticalPosition);
-
+    doc.setTextColor("#182d40");
+    doc.text("Project Details:", margin, verticalPosition);
     verticalPosition += 20;
 
-    // Table Headers
-    doc.setFillColor(secondaryColor);
-    doc.rect(margin, verticalPosition - 15, pageWidth - margin * 2, 20, "F");
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(textColor);
-    doc.text("Floor", margin + 10, verticalPosition);
-    doc.text("Room", margin + 100, verticalPosition);
-    doc.text("Equipments / Materials", margin + 200, verticalPosition);
-    doc.text("Quantity", pageWidth - margin - 80, verticalPosition);
-
-    verticalPosition += 20;
-
-    doc.setFont("helvetica", "normal");
-
-    // Project Details Content with Floors and Rooms
     if (estimateItem.details?.floors) {
       estimateItem.details.floors.forEach((floor) => {
-        // Display Floor Title
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(primaryColor);
-        doc.text(floor.floor_name, margin + 10, verticalPosition);
-        verticalPosition += 15;
-
         floor.rooms.forEach((room) => {
-          // Display Room Title only once, then list all items (equipment and accessories) under it
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(textColor);
-          doc.text(room.room_name, margin + 100, verticalPosition);
-
-          // Loop through both equipment and accessories for each room
-          const items = [...room.equipment, ...room.accessories];
-
-          items.forEach((item, index) => {
-            if (index > 0) {
-              // Indent items under the room name
-              verticalPosition += 15;
-              doc.text("", margin + 100, verticalPosition); // Leave room name blank for subsequent items
-            }
-
-            // Display item name and quantity
-            doc.text(item.name, margin + 200, verticalPosition);
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor("#404040");
+          doc.text(` ${room.room_name}`, margin, verticalPosition);
+          verticalPosition += 15;
+          room.equipment.forEach((item) => {
+            doc.setFont("helvetica", "normal");
             doc.text(
-              `${item.quantity}`,
-              pageWidth - margin - 60,
-              verticalPosition,
-              { align: "right" }
+              `- Installation of (${item.quantity}) ${item.name}  `,
+              margin + 20,
+              verticalPosition
             );
+            verticalPosition += 15;
           });
-
-          verticalPosition += 15; // Additional space after listing items
-
-          // Add a separator line after each room for clarity
-          doc.setDrawColor(separatorColor);
-          doc.setLineWidth(0.5);
-          doc.line(
-            margin,
-            verticalPosition,
-            pageWidth - margin,
-            verticalPosition
-          );
-
-          verticalPosition += 10; // Space below line separator
+          verticalPosition += 10;
         });
-
-        verticalPosition += 10; // Space between floors
       });
     }
 
-    verticalPosition += 25;
-
-    // Investment Cost Section
-    if (verticalPosition > pageHeight - 160) {
-      doc.addPage();
-      verticalPosition = margin;
-    }
-
-    doc.setFontSize(14);
+    // Investment Cost
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor);
-    doc.text("Investment Cost", margin, verticalPosition);
-
+    doc.setTextColor("#182d40");
+    doc.text("Investment Cost:", margin, verticalPosition);
     verticalPosition += 20;
-
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(textColor);
-    doc.text(`Investment Cost: `, margin, verticalPosition);
-    doc.setFont("helvetica", "bold");
+    doc.setTextColor("#404040");
     doc.text(
       `$${finalEstimateData.total_cost || "N/A"}`,
-      margin + 110,
+      margin,
       verticalPosition
     );
+    verticalPosition += 40;
 
-    verticalPosition += 25;
-
-    // Included Services Section
-    if (verticalPosition > pageHeight - 160) {
-      doc.addPage();
-      verticalPosition = margin;
-    }
-
-    doc.setFontSize(14);
+    // Warranty Information
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor);
-    doc.text("Included Services", margin, verticalPosition);
-
+    doc.setTextColor("#182d40");
+    doc.text("Warranty & Guarantee", margin, verticalPosition);
     verticalPosition += 20;
-
-    const includedServicesText = `The project encompasses a comprehensive suite of services, including installation of refrigeration piping supports, copper piping, insulation, and accessories; vacuum and leak testing with dry nitrogen; PVC piping for condensate drains; standalone controls; control wiring for all Mitsubishi units; thorough material delivery; site protection; cleaning of any affected areas; line hide for exterior piping; and electrical work.
-
-Commissioning and Quality Assurance: Upon installation, our expert team will conduct a commissioning and testing process to ensure flawless operation.`;
-
-    doc.setFontSize(10);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(textColor);
-    doc.text(includedServicesText, margin, verticalPosition, {
-      maxWidth: pageWidth - margin * 2,
-      align: "justify",
-    });
+    doc.setTextColor("#404040");
+    doc.text(
+      "• 1-year guarantee on service repairs\n" +
+        "• 2-year warranty on installation\n" +
+        "• 12-year warranty on compressors and parts (Mitsubishi Elite Contractor)",
+      margin,
+      verticalPosition
+    );
+    verticalPosition += 60;
 
-    verticalPosition += 20;
+    let aspectRatio = 150 / 80;
+    let newHeight = 260;
+    let newWidth = newHeight * aspectRatio;
+    
+    let aspectRatio1 = 100 / 80;
+    let newHeight1 = 190;
+    let newWidth1 = newHeight1 * aspectRatio1;
+    
+    // Adjust vertical position to place Mitsubishi logo first
+    verticalPosition -= 90; // Move up before placing the logo
+    
+    // Add Mitsubishi Logo on Top
+    doc.addImage(
+      mitsubishiLogo,
+      "SVG",
+      pageWidth / 2 - newWidth1 / 2,
+      verticalPosition,
+      newWidth1,
+      newHeight1
+    );
+    verticalPosition += 100; // Move down for BBB logo
+    
+    // Add BBB Logo Below
+    doc.addImage(
+      logoBBB,
+      "SVG",
+      pageWidth / 2 - newWidth / 2,
+      verticalPosition,
+      newWidth,
+      newHeight
+    );
+    
 
-    // Footer - Warranty and Quality Guarantee
-    if (verticalPosition > pageHeight - 70) {
-      doc.addPage();
-      verticalPosition = margin;
-    }
-
-    doc.setFillColor(primaryColor);
-    doc.rect(0, pageHeight - 70, pageWidth, 70, "F");
-
-    const footerText = `Warranty and Quality:
-We stand firmly behind the quality of our work, offering:
-- 1-year guarantee on all service repairs
-- 2-year warranty on installation work
-- 12-year warranty on compressors and parts, as a Mitsubishi Electric Diamond Contractor ELITE`;
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(255, 255, 255);
-    doc.text(footerText, margin, pageHeight - 60, {
-      maxWidth: pageWidth - margin * 2,
-      align: "left",
-    });
-
-    // Save the PDF
-    doc.save(`Estimate_${estimateItem.id}.pdf`);
-};
-
-
-  // Function to generate Type 2 PDF
-  const generatePDFType2 = () => {
-    const doc = new jsPDF({
-      format: "a4",
-      unit: "pt",
-    });
-    doc.text("Summary Estimate Report (Type 2)", 20, 20);
-    doc.text(`Client Name: ${estimateItem.client_name}`, 20, 40);
-    // Add more summarized content for PDF type 2...
-    doc.save(`Estimate_Type2_${estimateItem.id}.pdf`);
-  };
-
-  // Function to generate Type 3 PDF
-  const generatePDFType3 = () => {
-    const doc = new jsPDF({
-      format: "a4",
-      unit: "pt",
-    });
-    doc.text("Custom Estimate Report (Type 3)", 20, 20);
-    doc.text(`Client Name: ${estimateItem.client_name}`, 20, 40);
-    // Add different content for PDF type 3...
-    doc.save(`Estimate_Type3_${estimateItem.id}.pdf`);
-  };
-
-  // Function to handle PDF generation based on selected type
-  const handleGeneratePDF = () => {
-    if (selectedType === "type1") {
-      generatePDFType1();
-    } 
+    // Generate Blob and show in iframe
+    const pdfBlob = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    setPdfUrl(pdfUrl);
   };
 
   return (
     <PDFContainer>
-      <h3>Select PDF Version</h3>
+      <h2>Generate Estimate PDF</h2>
       <StyledSelect
         value={selectedType}
         onChange={(e) => setSelectedType(e.target.value)}
       >
-        <option value="type1">Clients Version</option>
-      
-
-
-      
+        <option value="type1">Type 1</option>
       </StyledSelect>
-      <StyledButtonG onClick={handleGeneratePDF}>Generate PDF</StyledButtonG>
+      <StyledButtonG onClick={generatePDFType1}>Preview PDF</StyledButtonG>
+      {pdfUrl && (
+        <iframe
+          src={pdfUrl}
+          width="100%"
+          height="600px"
+          style={{ border: "1px solid #ccc", marginTop: "20px" }}
+          title="Generated PDF"
+        ></iframe>
+      )}
     </PDFContainer>
   );
 }

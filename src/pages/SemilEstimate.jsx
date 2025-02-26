@@ -113,9 +113,19 @@ function SemiEstimate() {
 
   // Compute the filtered and alphabetically sorted list based on search term
   const filteredItems = (isAccessory ? accessories : equipments)
-    .filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((item) => {
+      // Check if item.name and item.model_number are defined and are strings before calling toLowerCase
+      const nameMatch =
+        item.name && typeof item.name === "string"
+          ? item.name.toLowerCase().includes(searchTerm.toLowerCase())
+          : false;
+      const modelMatch =
+        item.model_number && typeof item.model_number === "string"
+          ? item.model_number.toLowerCase().includes(searchTerm.toLowerCase())
+          : false;
+
+      return nameMatch || modelMatch;
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 
   // -------------------- Adding Items to Room --------------------
@@ -468,10 +478,10 @@ function SemiEstimate() {
       <ItemListContainer>
         {filteredItems.map((item) => (
           <ListItem key={item.id} onClick={() => handleSelectItem(item)}>
-            <strong>{item.name}</strong>
+            <strong>{item.model_number}</strong>
             <br />
             <span style={{ color: "#555", fontSize: "0.9rem" }}>
-              {item.brand}
+              {item.name}
             </span>
           </ListItem>
         ))}
@@ -506,13 +516,6 @@ function SemiEstimate() {
           value={laborHours}
           onChange={(e) => setLaborHours(e.target.value)}
         />
-        {/* <strong>M/C:</strong> {marketCap} */}
-        {/* <NumberInput
-          type="number"
-          placeholder="Market Cap"
-          value={marketCap}
-          onChange={(e) => setMarketCap(e.target.value)}
-        /> */}
       </InputRow>
       <StyledButton onClick={saveEstimateProgress}>Save Progress</StyledButton>
 
