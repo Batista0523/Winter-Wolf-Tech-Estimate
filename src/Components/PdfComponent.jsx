@@ -67,6 +67,7 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     verticalPosition += 20;
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
+    
     // doc.text(`Estimate ID: ${estimateItem.id}`, margin, verticalPosition);
     verticalPosition += 15;
     doc.text(
