@@ -534,26 +534,55 @@ function SemiEstimate() {
           <SummaryItem>
             <strong>Client Phone:</strong> {estimate.client_phone}
           </SummaryItem>
+          {/*will use Number().toLocalString to  add ',' for each 000 example 1000 ---> 1,000 */}
           <SummaryItem>
-            <strong>Equipment Cost:</strong> {finalEstimate.equipment_cost}
+            <strong>Equipment Cost:</strong>{" "}
+            {Number(finalEstimate.equipment_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>Accessories Cost:</strong> {finalEstimate.accessories_cost}
+            <strong>Accessories Cost:</strong>{" "}
+            {Number(finalEstimate.accessories_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>Tax:</strong> {finalEstimate.tax}
+            <strong>Tax:</strong>{" "}
+            {Number(finalEstimate.tax).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>Labor Cost:</strong> {finalEstimate.labor_cost}
+            <strong>Labor Cost:</strong>{" "}
+            {Number(finalEstimate.labor_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>Subtotal:</strong> {finalEstimate.subtotal}
+            <strong>Subtotal:</strong>{" "}
+            {Number(finalEstimate.subtotal).toLocaleString("es-US", {
+              maximumFractionDigits: 2,
+              minimumIntegerDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>M/C:</strong> {estimate.market_cap}
+            <strong>M/C:</strong>{" "}
+            {Number(estimate.market_cap).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </SummaryItem>
           <SummaryItem>
-            <strong>Total Cost:</strong> {finalEstimate.total_cost}
+            <strong>Total Cost:</strong>
+            {Number(finalEstimate.total_cost).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
             <StyledLink to={`/estimates`}> Go to Estimates Page</StyledLink>
           </SummaryItem>
         </SummarySection>

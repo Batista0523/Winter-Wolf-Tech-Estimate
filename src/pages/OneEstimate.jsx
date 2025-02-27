@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
   EstimateContainer,
-
   ClientInfo,
   ClientInfoTitle,
   ClientDetail,
@@ -23,14 +22,13 @@ import {
   CostBreakdown,
   CostTitle,
   CostDetail,
- 
   EstimateListContainer,
   EstimateBox,
 } from "../style/EstimateStyled";
 
 import PDFGenerator from "../Components/PdfComponent";
 import { StyledLink } from "../style/FinalEstimateStyled";
-function OneEstimate(  ) {
+function OneEstimate() {
   const { id } = useParams();
   const [oneEstimate, setOneEstimate] = useState([]);
   const [oneFinalEstimate, setOneFinalEstimate] = useState([]);
@@ -97,7 +95,7 @@ function OneEstimate(  ) {
         <EstimateBox>
           {oneEstimate ? (
             <ClientInfo>
-              <ClientDetail >
+              <ClientDetail>
                 <strong>Estimate ID:</strong> {oneEstimate.id}
               </ClientDetail>
               <ClientInfoTitle>Client Information</ClientInfoTitle>
@@ -185,21 +183,31 @@ function OneEstimate(  ) {
                   <strong>M/C : </strong> ${oneEstimate.market_cap}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Investment Cost : </strong> $
-                  {oneFinalEstimate.total_cost}
+                  <strong>Investment Cost: </strong> $
+                  {oneFinalEstimate.total_cost
+                    ? Number(oneFinalEstimate.total_cost).toLocaleString(
+                        "en-US",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )
+                    : "N/A"}
                 </CostDetail>
               </>
             ) : (
               <p>no data</p>
             )}
           </CostBreakdown>
-          <PDFGenerator estimateItem={oneEstimate}  finalEstimateData={oneFinalEstimate}/>
+          <PDFGenerator
+            estimateItem={oneEstimate}
+            finalEstimateData={oneFinalEstimate}
+          />
           <StyledLink to="/estimates">Back To Estimate</StyledLink>
           <StyledButton onClick={() => handleDelete(oneEstimate.id)}>
             Delete Estimate
           </StyledButton>
           <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>edit</StyledLink>
-
         </EstimateBox>
       </EstimateListContainer>
     </EstimateContainer>
