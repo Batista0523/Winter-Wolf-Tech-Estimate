@@ -1,10 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { fetchOneItem, deleteItem } from "../helpers/ApiCalls";
 import { confirmAlert } from "react-confirm-alert";
-import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
+import { useParams, useNavigate } from "react-router-dom";
 import {
   EstimateContainer,
   ClientInfo,
@@ -25,17 +22,17 @@ import {
   EstimateListContainer,
   EstimateBox,
 } from "../style/EstimateStyled";
-
 import PDFGenerator from "../Components/PdfComponent";
 import { StyledLink } from "../style/FinalEstimateStyled";
+
 function OneEstimate() {
   const { id } = useParams();
-  const [oneEstimate, setOneEstimate] = useState([]);
-  const [oneFinalEstimate, setOneFinalEstimate] = useState([]);
+  const [oneEstimate, setOneEstimate] = useState(null);
+  const [oneFinalEstimate, setOneFinalEstimate] = useState(null);
   const endpointForFinalEstimate = import.meta.env.VITE_FINAL_ESTIMATE_ENDPOINT;
   const endpointForEstimate = import.meta.env.VITE_ESTIMATE_ENDPOINT;
-  const [deleteEstimate, setDeleteEstimate] = useState([]);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,24 +44,20 @@ function OneEstimate() {
           setOneEstimate(estimateData.payload);
           setOneFinalEstimate(finalEstimateData.payload);
         } else {
-          console.error(
-            "error fetching one estimate data",
-            estimateData,
-            finalEstimateData
-          );
+          console.error("Error fetching estimate data", estimateData, finalEstimateData);
         }
       } catch (err) {
-        console.error("error fetching data internal", err);
+        console.error("Error fetching data", err);
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, endpointForEstimate, endpointForFinalEstimate]);
 
   const handleDelete = (id) => {
     const deleteEndpoint = import.meta.env.VITE_ESTIMATE_ENDPOINT;
     confirmAlert({
       title: "Confirm Deletion",
-      message: "Are you sure you want to delete this estimate",
+      message: "Are you sure you want to delete this estimate?",
       buttons: [
         {
           label: "Yes",
@@ -72,23 +65,23 @@ function OneEstimate() {
             try {
               const deleteResponse = await deleteItem(deleteEndpoint, id);
               if (deleteResponse.success) {
-                setDeleteEstimate(deleteResponse.payload);
                 alert("Estimate deleted successfully");
                 navigate("/estimates");
               } else {
-                console.error("error deleting", deleteResponse);
+                console.error("Error deleting estimate", deleteResponse);
               }
             } catch (err) {
-              console.error("error deleting", err);
+              console.error("Error deleting estimate", err);
             }
           },
         },
         {
-          label: "NO",
+          label: "No",
         },
       ],
     });
   };
+
   return (
     <EstimateContainer>
       <EstimateListContainer>
@@ -110,31 +103,29 @@ function OneEstimate() {
               </ClientDetail>
             </ClientInfo>
           ) : (
-            <p>no estimate</p>
+            <p>No estimate available</p>
           )}
           <JobBreakdown>
             <JobTitle>Jobs Breakdown</JobTitle>
-            {/* Floors, Rooms, Equipment, Accessories */}
-            {oneEstimate.details &&
+            {oneEstimate &&
+              oneEstimate.details &&
               oneEstimate.details.floors &&
               oneEstimate.details.floors.map((floor, floorIndex) => (
-                <FloorSection key={floorIndex}>
+                <FloorSection key={`floor-${floorIndex}-${floor.floor_name}`}>
                   <FloorTitle>Floor: {floor.floor_name}</FloorTitle>
                   {floor.rooms &&
                     floor.rooms.map((room, roomIndex) => (
-                      <RoomSection key={roomIndex}>
+                      <RoomSection key={`room-${roomIndex}-${room.room_name}`}>
                         <RoomTitle>Room: {room.room_name}</RoomTitle>
                         {room.equipment && room.equipment.length > 0 && (
                           <div>
                             <strong>Equipment:</strong>
                             <ItemList>
-                              {room.equipment.map(
-                                (equipment, equipmentIndex) => (
-                                  <Item key={equipmentIndex}>
-                                    {equipment.name} (x{equipment.quantity})
-                                  </Item>
-                                )
-                              )}
+                              {room.equipment.map((equipment, equipmentIndex) => (
+                                <Item key={`equipment-${equipmentIndex}-${equipment.name}`}>
+                                  {equipment.name} (x{equipment.quantity})
+                                </Item>
+                              ))}
                             </ItemList>
                           </div>
                         )}
@@ -142,14 +133,11 @@ function OneEstimate() {
                           <div>
                             <strong>Accessories:</strong>
                             <ItemList>
-                              {room.accessories.map(
-                                (accessory, accessoryIndex) => (
-                                  <Item key={accessoryIndex}>
-                                    {accessory.name} (x
-                                    {accessory.quantity})
-                                  </Item>
-                                )
-                              )}
+                              {room.accessories.map((accessory, accessoryIndex) => (
+                                <Item key={`accessory-${accessoryIndex}-${accessory.name}`}>
+                                  {accessory.name} (x{accessory.quantity})
+                                </Item>
+                              ))}
                             </ItemList>
                           </div>
                         )}
@@ -163,51 +151,52 @@ function OneEstimate() {
             {oneFinalEstimate && oneEstimate ? (
               <>
                 <CostDetail>
-                  <strong>Equipment Cost :</strong> $
-                  {oneFinalEstimate.equipment_cost}
+                  <strong>Equipment Cost:</strong> ${oneFinalEstimate.equipment_cost}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Accesories Cost :</strong> $
-                  {oneFinalEstimate.accessories_cost}
+                  <strong>Accessories Cost:</strong> ${oneFinalEstimate.accessories_cost}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Tax - 8.875% : </strong> ${oneFinalEstimate.tax}
+                  <strong>Tax - 8.875%:</strong> ${oneFinalEstimate.tax}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Labor Cost :</strong> $ {oneFinalEstimate.labor_cost}
+                  <strong>Labor Cost:</strong> ${oneFinalEstimate.labor_cost}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Subtotal : </strong> ${oneFinalEstimate.subtotal}
+                  <strong>Subtotal:</strong> ${oneFinalEstimate.subtotal}
                 </CostDetail>
                 <CostDetail>
-                  <strong>M/C : </strong> ${oneEstimate.market_cap}
+                  <strong>M/C:</strong> ${oneEstimate.market_cap}
                 </CostDetail>
                 <CostDetail>
-                  <strong>Investment Cost: </strong> $
+                  <strong>Investment Cost:</strong> $
                   {oneFinalEstimate.total_cost
-                    ? Number(oneFinalEstimate.total_cost).toLocaleString(
-                        "en-US",
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }
-                      )
+                    ? Number(oneFinalEstimate.total_cost).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
                     : "N/A"}
                 </CostDetail>
               </>
             ) : (
-              <p>no data</p>
+              <p>No cost data available</p>
             )}
           </CostBreakdown>
           <PDFGenerator
             estimateItem={oneEstimate}
             finalEstimateData={oneFinalEstimate}
           />
-          <StyledLink to="/estimates">Back To Estimate</StyledLink>
-          <StyledButton onClick={() => handleDelete(oneEstimate.id)}>
-            Delete Estimate
-          </StyledButton>
-          <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>Update Estimate</StyledLink>
+          <StyledLink to="/estimates">Back To Estimates</StyledLink>
+          {oneEstimate && (
+            <>
+              <StyledButton onClick={() => handleDelete(oneEstimate.id)}>
+                Delete Estimate
+              </StyledButton>
+              <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>
+                Update Estimate
+              </StyledLink>
+            </>
+          )}
         </EstimateBox>
       </EstimateListContainer>
     </EstimateContainer>

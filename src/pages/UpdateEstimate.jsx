@@ -27,8 +27,8 @@ import { useParams } from "react-router-dom";
 import { StyledLink } from "../style/FinalEstimateStyled";
 
 function UpdateEstimate() {
-  const { currentUser: user } = useAuth();
   const { id } = useParams();
+  const { user } = useAuth();
 
   const equipmentEndPoint = import.meta.env.VITE_EQUIPMENTS_ENDPOINT;
   const accessoryEndPoint = import.meta.env.VITE_ACCESORIES_ENDPOINT;
@@ -71,7 +71,7 @@ function UpdateEstimate() {
     fetchData();
   }, [equipmentEndPoint, accessoryEndPoint]);
 
-  // Fetch the existing estimate details for update
+  // Fetch the existing estimate details for update and transform floor and room names.
   useEffect(() => {
     const fetchEstimateData = async () => {
       const response = await fetchOneItem(estimateEndPoint, id);
@@ -89,7 +89,21 @@ function UpdateEstimate() {
         setClientPhone(client_phone);
         setLaborHours(labor_hours);
         setMarketCap(market_cap);
-        setLocations(details.floors || []);
+
+        // Transform floors data so that each floor and room has the expected keys.
+        const transformedFloors = details.floors
+          ? details.floors.map((floor) => ({
+              ...floor,
+              floorName: floor.floor_name || floor.floorName || "",
+              rooms: floor.rooms
+                ? floor.rooms.map((room) => ({
+                    ...room,
+                    roomName: room.room_name || room.roomName || "",
+                  }))
+                : [],
+            }))
+          : [];
+        setLocations(transformedFloors);
         setEstimate(response.payload);
       } else {
         console.error("Error fetching estimate data", response);
@@ -129,10 +143,13 @@ function UpdateEstimate() {
     const updatedLocations = [...locations];
     const currentRoom =
       updatedLocations[activeFloorIndex].rooms[activeRoomIndex];
-    const itemList = isAccessory ? currentRoom.accessories : currentRoom.equipment;
+    const itemList = isAccessory
+      ? currentRoom.accessories
+      : currentRoom.equipment;
     const existingItem = itemList.find((it) => it.id === selectedItem.id);
     if (existingItem) {
-      existingItem.quantity = Number(existingItem.quantity) + Number(quantity);
+      existingItem.quantity =
+        Number(existingItem.quantity) + Number(quantity);
     } else {
       itemList.push({ ...selectedItem, quantity });
     }
@@ -192,26 +209,6 @@ function UpdateEstimate() {
     // Prepare equipmentItems and accessoryItems arrays from locations
     const equipmentItems = [];
     const accessoryItems = [];
-    locations.forEach((floor) => {
-      floor.rooms.forEach((room) => {
-        room.equipment.forEach((eq) => {
-          const existing = equipmentItems.find((item) => item.id === eq.id);
-          if (existing) {
-            existing.quantity += eq.quantity;
-          } else {
-            equipmentItems.push({ id: eq.id, quantity: eq.quantity });
-          }
-        });
-        room.accessories.forEach((acc) => {
-          const existing = accessoryItems.find((item) => item.id === acc.id);
-          if (existing) {
-            existing.quantity += acc.quantity;
-          } else {
-            accessoryItems.push({ id: acc.id, quantity: acc.quantity });
-          }
-        });
-      });
-    });
 
     // Prepare updated estimate data payload
     const estimateData = {
@@ -229,12 +226,18 @@ function UpdateEstimate() {
           rooms: floor.rooms.map((room) => ({
             room_name: room.roomName,
             equipment: room.equipment.map((eq) => ({
+              id: eq.id,
               name: eq.name,
               quantity: eq.quantity,
+              floor_name: floor.floorName,
+              room_name: room.roomName,
             })),
             accessories: room.accessories.map((acc) => ({
+              id: acc.id,
               name: acc.name,
               quantity: acc.quantity,
+              floor_name: floor.floorName,
+              room_name: room.roomName,
             })),
           })),
         })),
@@ -250,10 +253,11 @@ function UpdateEstimate() {
 
     if (updateResponse.success) {
       // After a successful update, refetch the updated estimate and final estimate details
-      const [updatedEstimateResponse, finalEstimateResponse] = await Promise.all([
-        fetchOneItem(estimateEndPoint, id),
-        fetchOneItem(finalEstimateEndPoint, id),
-      ]);
+      const [updatedEstimateResponse, finalEstimateResponse] =
+        await Promise.all([
+          fetchOneItem(estimateEndPoint, id),
+          fetchOneItem(finalEstimateEndPoint, id),
+        ]);
       if (updatedEstimateResponse.success && finalEstimateResponse.success) {
         setEstimate(updatedEstimateResponse.payload);
         setFinalEstimate(finalEstimateResponse.payload);
@@ -307,7 +311,7 @@ function UpdateEstimate() {
       {/* Display for Floors, Rooms, and Items */}
       <DisplaySquare>
         {locations.map((floor, floorIndex) => (
-          <div key={floorIndex} className="floor-container">
+          <div key={`floor-${floorIndex}`} className="floor-container">
             <TitleWithRemove>
               {floor.floorName}
               <RemoveIcon onClick={() => handleRemoveFloor(floorIndex)}>
@@ -315,21 +319,31 @@ function UpdateEstimate() {
               </RemoveIcon>
             </TitleWithRemove>
             {floor.rooms.map((room, roomIndex) => (
-              <div key={roomIndex} className="room-container">
+              <div
+                key={`room-${floorIndex}-${roomIndex}`}
+                className="room-container"
+              >
                 <TitleWithRemove as="h4">
                   {room.roomName}
-                  <RemoveIcon onClick={() => handleRemoveRoom(floorIndex, roomIndex)}>
+                  <RemoveIcon
+                    onClick={() => handleRemoveRoom(floorIndex, roomIndex)}
+                  >
                     ×
                   </RemoveIcon>
                 </TitleWithRemove>
                 <ul>
                   {room.equipment.length > 0 && <h5>Equipment:</h5>}
                   {room.equipment.map((eq) => (
-                    <ListItemContainer key={eq.id}>
+                    <ListItemContainer key={`eq-${eq.id}`}>
                       {`${eq.name} ${eq.brand} (${eq.quantity} pcs)`}
                       <RemoveIcon
                         onClick={() =>
-                          handleRemoveItem(floorIndex, roomIndex, eq.id, "equipment")
+                          handleRemoveItem(
+                            floorIndex,
+                            roomIndex,
+                            eq.id,
+                            "equipment"
+                          )
                         }
                       >
                         ×
@@ -338,11 +352,16 @@ function UpdateEstimate() {
                   ))}
                   {room.accessories.length > 0 && <h5>Accessories:</h5>}
                   {room.accessories.map((acc) => (
-                    <ListItemContainer key={acc.id}>
+                    <ListItemContainer key={`acc-${acc.id}`}>
                       {`${acc.name}: ${acc.quantity} pcs`}
                       <RemoveIcon
                         onClick={() =>
-                          handleRemoveItem(floorIndex, roomIndex, acc.id, "accessory")
+                          handleRemoveItem(
+                            floorIndex,
+                            roomIndex,
+                            acc.id,
+                            "accessory"
+                          )
                         }
                       >
                         ×
@@ -357,7 +376,7 @@ function UpdateEstimate() {
       </DisplaySquare>
 
       {locations.map((floor, floorIndex) => (
-        <div key={floorIndex}>
+        <div key={`floor-input-${floorIndex}`}>
           <TextInput
             type="text"
             placeholder={`Floor ${floorIndex + 1} Name`}
@@ -369,21 +388,23 @@ function UpdateEstimate() {
             }}
           />
           {floor.rooms.map((room, roomIndex) => (
-            <div key={roomIndex}>
+            <div key={`room-input-${floorIndex}-${roomIndex}`}>
               <TextInput
                 type="text"
                 placeholder={`Room ${roomIndex + 1} Name`}
                 value={room.roomName}
                 onChange={(e) => {
                   const updatedLocations = [...locations];
-                  updatedLocations[floorIndex].rooms[roomIndex].roomName = e.target.value;
+                  updatedLocations[floorIndex].rooms[roomIndex].roomName =
+                    e.target.value;
                   setLocations(updatedLocations);
                 }}
               />
               <StyledButton
                 style={{
                   backgroundColor:
-                    activeFloorIndex === floorIndex && activeRoomIndex === roomIndex
+                    activeFloorIndex === floorIndex &&
+                    activeRoomIndex === roomIndex
                       ? "#4CAF50"
                       : "#ccc",
                 }}
@@ -392,7 +413,8 @@ function UpdateEstimate() {
                   setActiveRoomIndex(roomIndex);
                 }}
               >
-                {activeFloorIndex === floorIndex && activeRoomIndex === roomIndex
+                {activeFloorIndex === floorIndex &&
+                activeRoomIndex === roomIndex
                   ? `You are adding items to ${room.roomName}`
                   : `Click here to add items to ${room.roomName}`}
               </StyledButton>
@@ -407,7 +429,10 @@ function UpdateEstimate() {
       <StyledButton onClick={handleAddFloor}>Add Floor</StyledButton>
 
       {/* Selection of Equipment and Accessories */}
-      <StyledButton $active={!isAccessory} onClick={() => setIsAccessory(false)}>
+      <StyledButton
+        $active={!isAccessory}
+        onClick={() => setIsAccessory(false)}
+      >
         Equipment
       </StyledButton>
       <StyledButton $active={isAccessory} onClick={() => setIsAccessory(true)}>
@@ -415,16 +440,19 @@ function UpdateEstimate() {
       </StyledButton>
       <SearchBar
         type="text"
-        placeholder={isAccessory ? "Searching Accessories" : "Searching Equipments"}
+        placeholder={
+          isAccessory ? "Searching Accessories" : "Searching Equipments"
+        }
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
       <ItemListContainer>
         {filteredItems.map((item) => (
-          <ListItem key={item.id} onClick={() => handleSelectItem(item)}>
-            <strong>{item.model_number}</strong>
-            <br />
-            <span style={{ color: "#555", fontSize: "0.9rem" }}>{item.name}</span>
+          <ListItem
+            key={`filtered-${item.id}`}
+            onClick={() => handleSelectItem(item)}
+          >
+            {item.name} ({item.model_number})
           </ListItem>
         ))}
       </ItemListContainer>
@@ -442,7 +470,10 @@ function UpdateEstimate() {
             <StyledButton onClick={handleAddItem}>
               Add {isAccessory ? "Accessory" : "Equipment"}
             </StyledButton>
-            <StyledButton style={{ margin: "20px" }} onClick={handleCancelSelection}>
+            <StyledButton
+              style={{ margin: "20px" }}
+              onClick={handleCancelSelection}
+            >
               Cancel
             </StyledButton>
           </SelectedItemContainer>
