@@ -34,9 +34,9 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     let verticalPosition = margin;
 
     // Load images
-    const winterWolfLogo = await loadImage("/public/LOGO.svg");
-    const logoBBB = await loadImage("/public/BBBlogo.svg");
-    const mitsubishiLogo = await loadImage("/public/mitsubishi1.svg");
+    const winterWolfLogo = await loadImage("/LOGO.svg");
+    const logoBBB = await loadImage("/BBBlogo.svg");
+    const mitsubishiLogo = await loadImage("/mitsubishi1.svg");
 
     // ─── HEADER ───────────────────────────────────────────────
     const headerLogoWidth = 200;
