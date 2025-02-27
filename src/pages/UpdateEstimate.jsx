@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { fetchAllItems, fetchOneItem, updateItem } from "../helpers/ApiCalls";
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../AuthContext";
+import { fetchAllItems, updateItem, fetchOneItem } from "../helpers/ApiCalls";
 import {
   SemiEstimateContainer,
   Title,
@@ -7,8 +8,6 @@ import {
   NumberInput,
   ItemListContainer,
   SelectedItemContainer,
-  SelectionButton,
-  AddItemButton,
   StyledButton,
   SummarySection,
   SummaryItem,
@@ -25,66 +24,205 @@ import {
   Spinner,
 } from "../style/SemiEstimateStyled";
 import { useParams } from "react-router-dom";
+import { StyledLink } from "../style/FinalEstimateStyled";
 
 function UpdateEstimate() {
+  const { currentUser: user } = useAuth();
   const { id } = useParams();
-  const [estimate, setEstimate] = useState(null);
+
+  const equipmentEndPoint = import.meta.env.VITE_EQUIPMENTS_ENDPOINT;
+  const accessoryEndPoint = import.meta.env.VITE_ACCESORIES_ENDPOINT;
+  const estimateEndPoint = import.meta.env.VITE_ESTIMATE_ENDPOINT;
+  const finalEstimateEndPoint = import.meta.env.VITE_FINAL_ESTIMATE_ENDPOINT;
+
+  // -------------------- State Declarations --------------------
+  const [equipments, setEquipments] = useState([]);
+  const [accessories, setAccessories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [clientName, setClientName] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [laborHours, setLaborHours] = useState("");
   const [marketCap, setMarketCap] = useState("");
-  const [equipmentSearchQuery, setEquipmentSearchQuery] = useState("");
-  const [availableEquipment, setAvailableEquipment] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [isAccessory, setIsAccessory] = useState(false);
+  const [estimate, setEstimate] = useState(null);
+  const [finalEstimate, setFinalEstimate] = useState(null);
+  const [activeFloorIndex, setActiveFloorIndex] = useState(0);
+  const [activeRoomIndex, setActiveRoomIndex] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const summaryRef = useRef(null);
 
-  const endpointForEstimate = import.meta.env.VITE_ESTIMATE_ENDPOINT;
-  const endpointForEquipments = import.meta.env.VITE_EQUIPMENTS_ENDPOINT;
-
+  // -------------------- Data Fetching --------------------
+  // Fetch available equipments and accessories
   useEffect(() => {
-    const fetchEstimateData = async () => {
-      try {
-        const estimateData = await fetchOneItem(endpointForEstimate, id);
-        if (estimateData.success) {
-          const {
-            client_name,
-            client_address,
-            client_phone,
-            labor_hours,
-            market_cap,
-            details,
-          } = estimateData.payload;
-          setEstimate(estimateData.payload);
-          setClientName(client_name);
-          setClientAddress(client_address);
-          setClientPhone(client_phone);
-          setLaborHours(labor_hours);
-          setMarketCap(market_cap);
-          setLocations(details.floors || []);
-        } else {
-          console.log("Error fetching estimate", estimateData);
-        }
-      } catch (err) {
-        console.log("Internal error fetching estimate data", err);
+    const fetchData = async () => {
+      const [equipmentsResponse, accessoriesResponse] = await Promise.all([
+        fetchAllItems(equipmentEndPoint),
+        fetchAllItems(accessoryEndPoint),
+      ]);
+      if (equipmentsResponse.success && accessoriesResponse.success) {
+        setEquipments(equipmentsResponse.payload);
+        setAccessories(accessoriesResponse.payload);
       }
     };
+    fetchData();
+  }, [equipmentEndPoint, accessoryEndPoint]);
 
+  // Fetch the existing estimate details for update
+  useEffect(() => {
+    const fetchEstimateData = async () => {
+      const response = await fetchOneItem(estimateEndPoint, id);
+      if (response.success) {
+        const {
+          client_name,
+          client_address,
+          client_phone,
+          labor_hours,
+          market_cap,
+          details,
+        } = response.payload;
+        setClientName(client_name);
+        setClientAddress(client_address);
+        setClientPhone(client_phone);
+        setLaborHours(labor_hours);
+        setMarketCap(market_cap);
+        setLocations(details.floors || []);
+        setEstimate(response.payload);
+      } else {
+        console.error("Error fetching estimate data", response);
+      }
+    };
     fetchEstimateData();
-  }, [id]);
+  }, [estimateEndPoint, id]);
 
+  // -------------------- Item Selection and Filtering --------------------
+  const filteredItems = (isAccessory ? accessories : equipments)
+    .filter((item) => {
+      const nameMatch =
+        item.name && typeof item.name === "string"
+          ? item.name.toLowerCase().includes(searchTerm.toLowerCase())
+          : false;
+      const modelMatch =
+        item.model_number && typeof item.model_number === "string"
+          ? item.model_number.toLowerCase().includes(searchTerm.toLowerCase())
+          : false;
+      return nameMatch || modelMatch;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
+    setQuantity(1);
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedItem(null);
+    setQuantity(1);
+  };
+
+  // -------------------- Adding Items to Room --------------------
+  const handleAddItem = () => {
+    if (!selectedItem) return;
+    const updatedLocations = [...locations];
+    const currentRoom =
+      updatedLocations[activeFloorIndex].rooms[activeRoomIndex];
+    const itemList = isAccessory ? currentRoom.accessories : currentRoom.equipment;
+    const existingItem = itemList.find((it) => it.id === selectedItem.id);
+    if (existingItem) {
+      existingItem.quantity = Number(existingItem.quantity) + Number(quantity);
+    } else {
+      itemList.push({ ...selectedItem, quantity });
+    }
+    setLocations(updatedLocations);
+    setSelectedItem(null);
+    alert(`${quantity} ${selectedItem.name} added to ${currentRoom.roomName}`);
+  };
+
+  // -------------------- Managing Floors and Rooms --------------------
+  const handleAddRoom = (floorIndex) => {
+    const updatedLocations = [...locations];
+    updatedLocations[floorIndex].rooms.push({
+      roomName: `Room ${updatedLocations[floorIndex].rooms.length + 1}`,
+      equipment: [],
+      accessories: [],
+    });
+    setLocations(updatedLocations);
+  };
+
+  const handleAddFloor = () => {
+    setLocations([
+      ...locations,
+      {
+        floorName: `Floor ${locations.length + 1}`,
+        rooms: [{ roomName: "Room 1", equipment: [], accessories: [] }],
+      },
+    ]);
+  };
+
+  const handleRemoveItem = (floorIndex, roomIndex, itemId, itemType) => {
+    const updatedLocations = [...locations];
+    const room = updatedLocations[floorIndex].rooms[roomIndex];
+    if (itemType === "equipment") {
+      room.equipment = room.equipment.filter((item) => item.id !== itemId);
+    } else if (itemType === "accessory") {
+      room.accessories = room.accessories.filter((item) => item.id !== itemId);
+    }
+    setLocations(updatedLocations);
+  };
+
+  const handleRemoveRoom = (floorIndex, roomIndex) => {
+    const updatedLocations = [...locations];
+    updatedLocations[floorIndex].rooms.splice(roomIndex, 1);
+    setLocations(updatedLocations);
+  };
+
+  const handleRemoveFloor = (floorIndex) => {
+    const updatedLocations = [...locations];
+    updatedLocations.splice(floorIndex, 1);
+    setLocations(updatedLocations);
+  };
+
+  // -------------------- Updating the Estimate --------------------
   const handleUpdateEstimate = async () => {
     setIsUpdating(true);
 
-    const updatedEstimate = {
+    // Prepare equipmentItems and accessoryItems arrays from locations
+    const equipmentItems = [];
+    const accessoryItems = [];
+    locations.forEach((floor) => {
+      floor.rooms.forEach((room) => {
+        room.equipment.forEach((eq) => {
+          const existing = equipmentItems.find((item) => item.id === eq.id);
+          if (existing) {
+            existing.quantity += eq.quantity;
+          } else {
+            equipmentItems.push({ id: eq.id, quantity: eq.quantity });
+          }
+        });
+        room.accessories.forEach((acc) => {
+          const existing = accessoryItems.find((item) => item.id === acc.id);
+          if (existing) {
+            existing.quantity += acc.quantity;
+          } else {
+            accessoryItems.push({ id: acc.id, quantity: acc.quantity });
+          }
+        });
+      });
+    });
+
+    // Prepare updated estimate data payload
+    const estimateData = {
       client_name: clientName,
       client_address: clientAddress,
       client_phone: clientPhone,
       labor_hours: Number(laborHours),
-      labor_rate: 68, // Fixed labor rate
-      tax_rate: 0.08875, // Fixed tax rate
+      labor_rate: 68, // fixed labor rate
+      tax_rate: 0.08875, // fixed tax rate
       market_cap: parseFloat(marketCap).toFixed(2),
+      user_id: user?.id || 1,
       details: {
         floors: locations.map((floor) => ({
           floor_name: floor.floorName,
@@ -103,100 +241,50 @@ function UpdateEstimate() {
       },
     };
 
-    try {
-      const updateResponse = await updateItem(endpointForEstimate, id, {
-        estimateData: updatedEstimate,
-      });
-      if (updateResponse.success) {
-        alert("Estimate updated successfully");
-      } else {
-        console.log("Error updating estimate", updateResponse);
-      }
-    } catch (err) {
-      console.log("Internal error updating estimate", err);
-    }
+    // Call the updateItem helper (which performs a PUT request)
+    const updateResponse = await updateItem(estimateEndPoint, id, {
+      estimateData,
+      equipmentItems,
+      accessoryItems,
+    });
 
+    if (updateResponse.success) {
+      // After a successful update, refetch the updated estimate and final estimate details
+      const [updatedEstimateResponse, finalEstimateResponse] = await Promise.all([
+        fetchOneItem(estimateEndPoint, id),
+        fetchOneItem(finalEstimateEndPoint, id),
+      ]);
+      if (updatedEstimateResponse.success && finalEstimateResponse.success) {
+        setEstimate(updatedEstimateResponse.payload);
+        setFinalEstimate(finalEstimateResponse.payload);
+        alert("Estimate updated successfully!");
+      } else {
+        console.error("Error fetching updated estimate data");
+      }
+    } else {
+      console.error("Error updating estimate", updateResponse);
+    }
     setIsUpdating(false);
   };
 
-  // Fetch available equipment based on search query
-  const handleSearchEquipment = async (query) => {
-    setLoading(true);
-    try {
-      const response = await fetchAllItems(endpointForEquipments, query);
-      if (response.success) {
-        setAvailableEquipment(response.payload); // Assuming the response contains an array of equipment
-      } else {
-        console.log("Error fetching equipment", response);
-      }
-    } catch (err) {
-      console.log("Internal error searching equipment", err);
-    }
-    setLoading(false);
+  // -------------------- Saving Progress --------------------
+  const saveEstimateProgress = () => {
+    const estimateProgress = {
+      clientName,
+      clientAddress,
+      clientPhone,
+      locations,
+      laborHours,
+      marketCap,
+    };
+    localStorage.setItem("estimateProgress", JSON.stringify(estimateProgress));
+    alert("Estimate progress has been saved!");
   };
 
-  const handleEquipmentChange = async (
-    e,
-    floorIndex,
-    roomIndex,
-    equipmentIndex
-  ) => {
-    const equipmentName = e.target.value;
-    const updatedLocations = [...locations];
-
-    // Update the equipment name as the user types
-    updatedLocations[floorIndex].rooms[roomIndex].equipment[
-      equipmentIndex
-    ].name = equipmentName;
-    setLocations(updatedLocations);
-
-    // Fetch the equipment models based on the equipment name
-    if (equipmentName.trim()) {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_PRODUCTION_URL}/${
-            import.meta.env.VITE_EQUIPMENTS_ENDPOINT
-          }?query=${equipmentName}`
-        );
-        const data = await response.json();
-        if (data.success) {
-          setAvailableEquipment(data.payload); // Update with the fetched models
-        } else {
-          console.log("Error fetching equipment models:", data);
-        }
-      } catch (err) {
-        console.log("Internal error fetching equipment models", err);
-      }
-      setLoading(false);
-    } else {
-      setAvailableEquipment([]); // Clear suggestions if the input is empty
-    }
-  };
-
-  const handleQuantityChange = (
-    e,
-    floorIndex,
-    roomIndex,
-    equipmentIndex,
-    isAccessory = false
-  ) => {
-    const updatedLocations = [...locations];
-    if (isAccessory) {
-      updatedLocations[floorIndex].rooms[roomIndex].accessories[
-        equipmentIndex
-      ].quantity = e.target.value;
-    } else {
-      updatedLocations[floorIndex].rooms[roomIndex].equipment[
-        equipmentIndex
-      ].quantity = e.target.value;
-    }
-    setLocations(updatedLocations);
-  };
-
+  // -------------------- Render JSX --------------------
   return (
     <SemiEstimateContainer>
-      <Title>Page Under Construction - More Update Are Coming Soon</Title>
+      <Title>Update Estimate</Title>
       <TextInput
         type="text"
         placeholder="Client Name"
@@ -215,154 +303,236 @@ function UpdateEstimate() {
         value={clientPhone}
         onChange={(e) => setClientPhone(e.target.value)}
       />
-      <NumberInput
-        type="number"
-        placeholder="Labor Hours"
-        value={laborHours}
-        onChange={(e) => setLaborHours(e.target.value)}
-      />
-      <NumberInput
-        type="number"
-        placeholder="Market Cap"
-        value={marketCap}
-        onChange={(e) => setMarketCap(e.target.value)}
-      />
-
-      {/* Search Bar for Equipment */}
-      <SearchBar
-        type="text"
-        value={equipmentSearchQuery}
-        onChange={(e) => {
-          setEquipmentSearchQuery(e.target.value);
-          handleSearchEquipment(e.target.value); // Trigger search on change
-        }}
-        placeholder="Search Equipment"
-      />
-
-      {/* Display available equipment based on search query */}
-      {loading ? (
-        <LoadingOverlay>
-          <Spinner />
-        </LoadingOverlay>
-      ) : (
-        <div>
-          {availableEquipment.length > 0 && (
-            <ItemListContainer>
-              {availableEquipment.map((equipment, index) => (
-                <ListItem
-                  key={index}
-                  onClick={() => setEquipmentSearchQuery(equipment.name)}
-                >
-                  {equipment.name}
-                </ListItem>
-              ))}
-            </ItemListContainer>
-          )}
-        </div>
-      )}
 
       {/* Display for Floors, Rooms, and Items */}
       <DisplaySquare>
         {locations.map((floor, floorIndex) => (
           <div key={floorIndex} className="floor-container">
             <TitleWithRemove>
-              <TextInput
-                type="text"
-                value={floor.floorName}
-                onChange={(e) => handleFloorChange(e, floorIndex)}
-                placeholder="Floor Name"
-              />
+              {floor.floorName}
+              <RemoveIcon onClick={() => handleRemoveFloor(floorIndex)}>
+                ×
+              </RemoveIcon>
             </TitleWithRemove>
             {floor.rooms.map((room, roomIndex) => (
               <div key={roomIndex} className="room-container">
                 <TitleWithRemove as="h4">
-                  <TextInput
-                    type="text"
-                    value={room.roomName}
-                    onChange={(e) => handleRoomChange(e, floorIndex, roomIndex)}
-                    placeholder="Room Name"
-                  />
+                  {room.roomName}
+                  <RemoveIcon onClick={() => handleRemoveRoom(floorIndex, roomIndex)}>
+                    ×
+                  </RemoveIcon>
                 </TitleWithRemove>
-                <ItemListContainer>
-                  {room.equipment.map((item, itemIndex) => (
-                    <ListItem key={item.id || itemIndex}>
-                      <TextInput
-                        type="text"
-                        value={item.name}
-                        onChange={(e) =>
-                          handleEquipmentChange(
-                            e,
-                            floorIndex,
-                            roomIndex,
-                            itemIndex
-                          )
+                <ul>
+                  {room.equipment.length > 0 && <h5>Equipment:</h5>}
+                  {room.equipment.map((eq) => (
+                    <ListItemContainer key={eq.id}>
+                      {`${eq.name} ${eq.brand} (${eq.quantity} pcs)`}
+                      <RemoveIcon
+                        onClick={() =>
+                          handleRemoveItem(floorIndex, roomIndex, eq.id, "equipment")
                         }
-                        placeholder="Equipment Name"
-                      />
-                      <NumberInput
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            e,
-                            floorIndex,
-                            roomIndex,
-                            itemIndex
-                          )
-                        }
-                        placeholder="Quantity"
-                      />
-                    </ListItem>
+                      >
+                        ×
+                      </RemoveIcon>
+                    </ListItemContainer>
                   ))}
-                  {room.accessories.map((item, accIndex) => (
-                    <ListItem key={item.id || accIndex}>
-                      <TextInput
-                        type="text"
-                        value={item.name}
-                        onChange={(e) =>
-                          handleEquipmentChange(
-                            e,
-                            floorIndex,
-                            roomIndex,
-                            accIndex,
-                            true
-                          )
+                  {room.accessories.length > 0 && <h5>Accessories:</h5>}
+                  {room.accessories.map((acc) => (
+                    <ListItemContainer key={acc.id}>
+                      {`${acc.name}: ${acc.quantity} pcs`}
+                      <RemoveIcon
+                        onClick={() =>
+                          handleRemoveItem(floorIndex, roomIndex, acc.id, "accessory")
                         }
-                        placeholder="Accessory Name"
-                      />
-                      <NumberInput
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            e,
-                            floorIndex,
-                            roomIndex,
-                            accIndex,
-                            true
-                          )
-                        }
-                        placeholder="Quantity"
-                      />
-                    </ListItem>
+                      >
+                        ×
+                      </RemoveIcon>
+                    </ListItemContainer>
                   ))}
-                </ItemListContainer>
+                </ul>
               </div>
             ))}
           </div>
         ))}
       </DisplaySquare>
 
-      {/* <StyledButton onClick={handleUpdateEstimate} disabled={isUpdating}>
-        {isUpdating ? "Updating..." : "Update Estimate "}
-      </StyledButton> */}
-      <p>
-        The update functionality has been completed; however, I am currently
-        working on the input fields to ensure all necessary information is
-        properly updated in the estimate. As a result, the 'Update Estimate'
-        button has been temporarily disabled..
-      </p>
-      <StyledButton>Update estimate </StyledButton>
+      {locations.map((floor, floorIndex) => (
+        <div key={floorIndex}>
+          <TextInput
+            type="text"
+            placeholder={`Floor ${floorIndex + 1} Name`}
+            value={floor.floorName}
+            onChange={(e) => {
+              const updatedLocations = [...locations];
+              updatedLocations[floorIndex].floorName = e.target.value;
+              setLocations(updatedLocations);
+            }}
+          />
+          {floor.rooms.map((room, roomIndex) => (
+            <div key={roomIndex}>
+              <TextInput
+                type="text"
+                placeholder={`Room ${roomIndex + 1} Name`}
+                value={room.roomName}
+                onChange={(e) => {
+                  const updatedLocations = [...locations];
+                  updatedLocations[floorIndex].rooms[roomIndex].roomName = e.target.value;
+                  setLocations(updatedLocations);
+                }}
+              />
+              <StyledButton
+                style={{
+                  backgroundColor:
+                    activeFloorIndex === floorIndex && activeRoomIndex === roomIndex
+                      ? "#4CAF50"
+                      : "#ccc",
+                }}
+                onClick={() => {
+                  setActiveFloorIndex(floorIndex);
+                  setActiveRoomIndex(roomIndex);
+                }}
+              >
+                {activeFloorIndex === floorIndex && activeRoomIndex === roomIndex
+                  ? `You are adding items to ${room.roomName}`
+                  : `Click here to add items to ${room.roomName}`}
+              </StyledButton>
+            </div>
+          ))}
+          <StyledButton onClick={() => handleAddRoom(floorIndex)}>
+            {`Add Room to ${floor.floorName}`}
+          </StyledButton>
+        </div>
+      ))}
+
+      <StyledButton onClick={handleAddFloor}>Add Floor</StyledButton>
+
+      {/* Selection of Equipment and Accessories */}
+      <StyledButton $active={!isAccessory} onClick={() => setIsAccessory(false)}>
+        Equipment
+      </StyledButton>
+      <StyledButton $active={isAccessory} onClick={() => setIsAccessory(true)}>
+        Accessories
+      </StyledButton>
+      <SearchBar
+        type="text"
+        placeholder={isAccessory ? "Searching Accessories" : "Searching Equipments"}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <ItemListContainer>
+        {filteredItems.map((item) => (
+          <ListItem key={item.id} onClick={() => handleSelectItem(item)}>
+            <strong>{item.model_number}</strong>
+            <br />
+            <span style={{ color: "#555", fontSize: "0.9rem" }}>{item.name}</span>
+          </ListItem>
+        ))}
+      </ItemListContainer>
+
+      {selectedItem && (
+        <OverlayContainer>
+          <SelectedItemContainer>
+            <p>Selected Item: {selectedItem.name}</p>
+            <NumberInput2
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              min="1"
+            />
+            <StyledButton onClick={handleAddItem}>
+              Add {isAccessory ? "Accessory" : "Equipment"}
+            </StyledButton>
+            <StyledButton style={{ margin: "20px" }} onClick={handleCancelSelection}>
+              Cancel
+            </StyledButton>
+          </SelectedItemContainer>
+        </OverlayContainer>
+      )}
+
+      <InputRow>
+        <NumberInput
+          type="number"
+          placeholder="Labor Hours"
+          value={laborHours}
+          onChange={(e) => setLaborHours(e.target.value)}
+        />
+      </InputRow>
+
+      <StyledButton onClick={saveEstimateProgress}>Save Progress</StyledButton>
+      <StyledButton onClick={handleUpdateEstimate} disabled={isUpdating}>
+        {isUpdating ? "Updating..." : "Update Estimate"}
+      </StyledButton>
+
+      {estimate && finalEstimate && (
+        <SummarySection ref={summaryRef}>
+          <h2>Estimate Summary</h2>
+          <SummaryItem>
+            <strong>Client Name:</strong> {estimate.client_name}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Client Address:</strong> {estimate.client_address}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Client Phone:</strong> {estimate.client_phone}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Equipment Cost:</strong>{" "}
+            {Number(finalEstimate.equipment_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Accessories Cost:</strong>{" "}
+            {Number(finalEstimate.accessories_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Tax:</strong>{" "}
+            {Number(finalEstimate.tax).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Labor Cost:</strong>{" "}
+            {Number(finalEstimate.labor_cost).toLocaleString("es-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Subtotal:</strong>{" "}
+            {Number(finalEstimate.subtotal).toLocaleString("es-US", {
+              maximumFractionDigits: 2,
+              minimumIntegerDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>M/C:</strong>{" "}
+            {Number(estimate.market_cap).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </SummaryItem>
+          <SummaryItem>
+            <strong>Total Cost:</strong>{" "}
+            {Number(finalEstimate.total_cost).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+            <StyledLink to={`/estimates`}> Go to Estimates Page</StyledLink>
+          </SummaryItem>
+        </SummarySection>
+      )}
+
+      {isUpdating && (
+        <LoadingOverlay>
+          <Spinner />
+        </LoadingOverlay>
+      )}
     </SemiEstimateContainer>
   );
 }

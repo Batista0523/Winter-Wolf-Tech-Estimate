@@ -207,7 +207,7 @@ function OneEstimate() {
           <StyledButton onClick={() => handleDelete(oneEstimate.id)}>
             Delete Estimate
           </StyledButton>
-          <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>edit</StyledLink>
+          <StyledLink to={`/updateEstimate/${oneEstimate.id}`}>Update Estimate</StyledLink>
         </EstimateBox>
       </EstimateListContainer>
     </EstimateContainer>
