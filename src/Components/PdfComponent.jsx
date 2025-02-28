@@ -309,10 +309,10 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     let verticalPosition = 0;
 
     // ─── Header Section ──────────────────────────────────────────────
-    const headerHeight = 80;
+    const headerHeight = 100;
     // Full-width header background in a professional dark blue
-    doc.setFillColor(0); //24, 45, 64
-    doc.rect(0, 0, pageWidth, headerHeight, "F");
+    // doc.setFillColor(0)
+    // doc.rect(0, 0, pageWidth, headerHeight, "F");
 
     // Load images
     const winterWolfLogoObj = await loadImage("/LOGO.svg");
@@ -320,7 +320,7 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     const mitsubishiLogo = await loadImage("/mitsubishi1.svg");
 
     // Center main logo in header with proper scaling
-    const maxLogoHeight = headerHeight * 2.8;
+    const maxLogoHeight = headerHeight * 3;
     const logoScale = maxLogoHeight / winterWolfLogoObj.height;
     const logoWidth = winterWolfLogoObj.width * logoScale;
     const logoHeight = winterWolfLogoObj.height * logoScale;
@@ -329,20 +329,9 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     doc.addImage(winterWolfLogoObj.data, "PNG", logoX, logoY, logoWidth, logoHeight);
 
     // Set starting position for body content (below header)
-    verticalPosition = headerHeight + 60;
+    verticalPosition = headerHeight + 10;
 
-    // ─── Introductory Section ─────────────────────────────────────────
-    doc.setFillColor(247, 247, 247);
-    const introBoxHeight = 85;
-    doc.rect(margin, verticalPosition, pageWidth - 2 * margin, introBoxHeight, "F");
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(14);
-    doc.setTextColor(50, 50, 50);
-    const introText =
-      "We are pleased to present our proposal to install a high-efficiency Mitsubishi System at your residence. We understand the importance of maintaining a comfortable and energy-efficient environment and are committed to providing a seamless and compliant installation process.";
-    const introLines = doc.splitTextToSize(introText, pageWidth - 2 * margin - 20);
-    doc.text(introLines, margin + 10, verticalPosition + 20);
-    verticalPosition += introBoxHeight + 30;
+ 
 
     // ─── Client Section ──────────────────────────────────────────────
     const clientBoxHeight = 50;
@@ -357,7 +346,19 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     doc.setTextColor(80, 80, 80);
     doc.text(estimateItem.client_address, margin + 10, verticalPosition + 36);
     verticalPosition += clientBoxHeight + 30;
-
+    
+    // ─── Introductory Section ─────────────────────────────────────────
+    doc.setFillColor(247, 247, 247);
+    const introBoxHeight = 85;
+    doc.rect(margin, verticalPosition, pageWidth - 2 * margin, introBoxHeight, "F");
+    doc.setFont("Helvetica", "normal");
+    doc.setFontSize(14);
+    doc.setTextColor(50, 50, 50);
+    const introText =
+      "We are pleased to present our proposal to install a high-efficiency Mitsubishi System at your residence. We understand the importance of maintaining a comfortable and energy-efficient environment and are committed to providing a seamless and compliant installation process.";
+    const introLines = doc.splitTextToSize(introText, pageWidth - 2 * margin - 20);
+    doc.text(introLines, margin + 10, verticalPosition + 20);
+    verticalPosition += introBoxHeight + 30;
     // ─── Project Details Section ─────────────────────────────────────
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(14);
@@ -441,9 +442,9 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     verticalPosition += warrantyLines.length * 14 + 30;
 
     // ─── Footer Section ──────────────────────────────────────────────
-    const footerHeight = 80;
+    const footerHeight = 85;
     const footerY = pageHeight - footerHeight;
-    doc.setLineWidth(1);
+    doc.setLineWidth(2);
     doc.setDrawColor(200, 200, 200);
     doc.line(margin, footerY, pageWidth - margin, footerY);
 
@@ -451,7 +452,7 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     const logoWidthBBB = 120;
     const logoHeightBBB = 70;
     const logoWidthMitsubishi = 160;
-    const logoHeightMitsubishi = 60;
+    const logoHeightMitsubishi = 80;
     const spaceBetweenLogos = 30;
     const totalLogosWidth = logoWidthBBB + logoWidthMitsubishi + spaceBetweenLogos;
     const logosX = (pageWidth - totalLogosWidth) / 2;
