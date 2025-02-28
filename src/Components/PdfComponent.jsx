@@ -329,14 +329,14 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     doc.addImage(winterWolfLogoObj.data, "PNG", logoX, logoY, logoWidth, logoHeight);
 
     // Set starting position for body content (below header)
-    verticalPosition = headerHeight + 20;
+    verticalPosition = headerHeight + 60;
 
     // ─── Introductory Section ─────────────────────────────────────────
     doc.setFillColor(247, 247, 247);
-    const introBoxHeight = 70;
+    const introBoxHeight = 85;
     doc.rect(margin, verticalPosition, pageWidth - 2 * margin, introBoxHeight, "F");
     doc.setFont("Helvetica", "normal");
-    doc.setFontSize(11);
+    doc.setFontSize(14);
     doc.setTextColor(50, 50, 50);
     const introText =
       "We are pleased to present our proposal to install a high-efficiency Mitsubishi System at your residence. We understand the importance of maintaining a comfortable and energy-efficient environment and are committed to providing a seamless and compliant installation process.";
