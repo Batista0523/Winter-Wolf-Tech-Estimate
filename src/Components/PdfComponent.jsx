@@ -422,6 +422,7 @@ function PDFGenerator({ estimateItem, finalEstimateData }) {
     doc.text(costText, margin, verticalPosition);
     verticalPosition += 30;
 
+    
     // ─── Warranty & Quality Guarantee Section ─────────────────────────
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(14);

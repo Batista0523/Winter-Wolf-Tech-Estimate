@@ -8,8 +8,6 @@ import {
   NumberInput,
   ItemListContainer,
   SelectedItemContainer,
-  SelectionButton,
-  AddItemButton,
   StyledButton,
   SummarySection,
   SummaryItem,
